@@ -18,15 +18,8 @@ function extractImageUrl(message, args, event) {
 
 function extractEditPrompt(rawArgs, imageUrl) {
     let prompt = rawArgs.join(" ");
-    
-    if (imageUrl) {
-        prompt = prompt.replace(imageUrl, '').trim();
-    }
-    
-    if (prompt.includes('|')) {
-        prompt = prompt.split('|')[0].trim();
-    }
-
+    if (imageUrl) prompt = prompt.replace(imageUrl, '').trim();
+    if (prompt.includes('|')) prompt = prompt.split('|')[0].trim();
     return prompt || "enhance quality";
 }
 
@@ -34,10 +27,10 @@ module.exports = {
   config: {
     name: "edit",
     aliases: ["imgedit", "nanoedit"],
-    version: "2.4",
+    version: "2.3",
     author: "NeoKEX",
     countDown: 15,
-    role: 0,
+    role: 2, // ⬅️ Only Bot Admin Should Use
     longDescription: "Edit or modify an existing image using a text prompt.",
     category: "ai-image",
     guide: {
@@ -45,57 +38,47 @@ module.exports = {
     }
   },
 
-  onStart: async function({ message, args, event }) {
+  onStart: async function({ message, args, event, global }) {
 
-    // 🔐 BOT ADMIN CHECK (Only bot admins can use this command)
-    const botAdmins = global.config.ADMINBOT || [];
+    // ✅ BOT ADMIN CHECK
+    const botAdmins = global.GoatBot.config.adminBot || [];
     if (!botAdmins.includes(event.senderID)) {
-      return message.reply("❌ এই কমান্ডটি শুধুমাত্র বট এডমিন ব্যবহার করতে পারবেন!");
+      return message.reply("❌ This command is restricted.\n🔐 Only **Bot Admin** can use the edit command!");
     }
+    // -------------------------------------
 
     const imageUrl = extractImageUrl(message, args, event);
     const editPrompt = extractEditPrompt(args, imageUrl);
 
-    if (!imageUrl) {
-      return message.reply("❌ Please provide an image URL or reply to an image to edit.");
-    }
-    if (!editPrompt) {
-        return message.reply("❌ Please provide a prompt describing the modification you want to make.");
-    }
+    if (!imageUrl) return message.reply("❌ Please reply to an image or provide an image URL.");
+    if (!editPrompt) return message.reply("❌ Please provide a prompt describing the modification.");
 
     message.reaction("⏳", event.messageID);
     let tempFilePath; 
 
     try {
       const fullApiUrl = `${API_ENDPOINT}?prompt=${encodeURIComponent(editPrompt)}&url=${encodeURIComponent(imageUrl)}`;
-      
       const apiResponse = await axios.get(fullApiUrl);
       const data = apiResponse.data;
 
       if (!data.success || !data.imageUrl) {
-        throw new Error(data.error || "API returned success: false or missing image URL.");
+        throw new Error(data.error || "API returned invalid result.");
       }
 
       const finalImageUrl = data.imageUrl;
 
-      const imageDownloadResponse = await axios.get(finalImageUrl, {
-          responseType: 'stream',
-      });
-      
+      const imageDownloadResponse = await axios.get(finalImageUrl, { responseType: 'stream' });
+
       const cacheDir = path.join(__dirname, 'cache');
       if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
-      
+
       tempFilePath = path.join(cacheDir, `edited_nano_${Date.now()}.png`);
-      
       const writer = fs.createWriteStream(tempFilePath);
       imageDownloadResponse.data.pipe(writer);
 
       await new Promise((resolve, reject) => {
         writer.on("finish", resolve);
-        writer.on("error", (err) => {
-          writer.close();
-          reject(err);
-        });
+        writer.on("error", reject);
       });
 
       message.reaction("✅", event.messageID);
@@ -105,18 +88,18 @@ module.exports = {
 
     } catch (error) {
       message.reaction("❌", event.messageID);
+      let errorMessage = "❌ Error during image editing.";
       
-      let errorMessage = "An error occurred during image editing.";
-      if (error.response && error.response.data && error.response.data.error) {
-         errorMessage += ` (API Error: ${error.response.data.error})`;
-      } else if (error.message) {
-         errorMessage = `❌ ${error.message}`;
-      } else if (error.code) {
-         errorMessage = `❌ Network Error: ${error.code}`;
-      }
+      if (error.response?.data?.error)
+        errorMessage += ` (API Error: ${error.response.data.error})`;
+      else if (error.message)
+        errorMessage = `❌ ${error.message}`;
+      else if (error.code)
+        errorMessage = `❌ Network Error: ${error.code}`;
 
       console.error("Edit Command Error:", error);
-      message.reply(`❌ ${errorMessage}`);
+      message.reply(errorMessage);
+
     } finally {
       if (tempFilePath && fs.existsSync(tempFilePath)) {
           fs.unlinkSync(tempFilePath);

@@ -38,7 +38,7 @@ module.exports = {
     version: "2.3",
     author: "NeoKEX",
     countDown: 15,
-    role: 3,
+    role: 0,
     longDescription: "Edit or modify an existing image using a text prompt.",
     category: "ai-image",
     guide: {

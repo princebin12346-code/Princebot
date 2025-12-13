@@ -42,7 +42,7 @@ module.exports = {
     try {
       if (!query) {
         await sendTyping();
-        const ran = ["ওয়ালাইকুম আসসালাম🖤🌸", "ওয়ালাইকুম আসসালাম 🖤🌸"];
+        const ran = ["Bolo baby 💖", "Hea baby 😚"];
         const r = ran[Math.floor(Math.random() * ran.length)];
         return message.reply(r, (err, info) => {
           if (!err) {
@@ -169,10 +169,10 @@ module.exports = {
     };
 
     try {
-      const simpleTriggers = ["আসসালামু আলাইকুম", "Aslamu alaikum"];
+      const simpleTriggers = ["baby", "bot", "bby", "বেবি", "বট", "oi", "oii", "jan"];
       if (simpleTriggers.includes(raw)) {
         await sendTyping();
-        const replies = ["ওয়ালাইকুম আসসালাম🖤🌸", "ওয়ালাইকুম আসসালাম🥰", "ওয়ালাইকুম আসসালাম 🫡", "ওয়ালাইকুম আসসালাম 🌺"];
+        const replies = ["ডাকো কেন 🥺 প্রেম করবা নাকি 😞", "বুকাচুদা আর কত বট বট করবি 🐸", "ওই জান কাছে আসো 🫦👅", "আলাবু বলো সোনা 🤧", "আকাশ কে দেখছো? 🥺 তাকে কোথাও খুজে পাচ্ছি না 😩", "তুমার নুনুতে উম্মাহ 🥺🤌", "হ্যাঁ গো জান বলো 🙂", "ডাকিস না, তুই পচা 😼"];
         const reply = replies[Math.floor(Math.random() * replies.length)];
         return message.reply(reply, (err, info) => {
           if (!err) global.GoatBot.onReply.set(info.messageID, { commandName: "baby", author: senderID });
@@ -180,7 +180,7 @@ module.exports = {
       }
 
       // যদি “baby [text]” হয়
-      const prefixes = ["আসসালামু আলাইকুম", "আসসালামুআলাইকুম", "Aslamu alaikum", "Aslamu alaikum", "bot"];
+      const prefixes = ["baby ", "bot ", "বেবি ", "বট ", "jan"];
       const prefix = prefixes.find(p => raw.startsWith(p));
       if (prefix) {
         const query = raw.replace(prefix, "").trim();
@@ -192,7 +192,7 @@ module.exports = {
         if (!responses || responses.length === 0) {
           console.log(`🧠 Auto-learned: "${query}"`);
           await axios.get(`${simsim}/teach?ask=${encodeURIComponent(query)}&ans=${encodeURIComponent("hmm baby 😚 (auto learned)")}&senderName=${encodeURIComponent(senderName)}`);
-          return message.reply("ওয়ালাইকুম আসসালাম 🖤🌸");
+          return message.reply("hmm baby 😚");
         }
 
         for (const reply of responses) {
